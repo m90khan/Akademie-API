@@ -21,7 +21,7 @@ exports.getAllBootCamps = catchAsync(async (req, res, next) => {
   // create operators lt gt gte in ggt  => $
   let queryString = JSON.stringify(reqQuery);
   queryString = queryString.replace(/\b(gte|gt|lte|lt|in)\b/g, (match) => `$${match}`);
-  console.log(reqQuery);
+  // console.log(reqQuery);
 
   query = Camp.find(JSON.parse(queryString));
 
