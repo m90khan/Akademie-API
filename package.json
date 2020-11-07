@@ -4,7 +4,7 @@
   "description": "Akademie backend api ",
   "main": "server.js",
   "scripts": {
-    "dev-server": "nodemon server",
+    "dev-server": "nodemon server.js",
     "prod-server": "NODE_ENV=production node server"
   },
   "repository": {
@@ -26,9 +26,13 @@
   },
   "homepage": "https://github.com/m90khan/Akademie-API#readme",
   "dependencies": {
+    "colors": "^1.4.0",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
-    "mongoose": "^5.10.12"
+    "mongoose": "^5.10.12",
+    "morgan": "^1.10.0",
+    "node-geocoder": "^3.27.0",
+    "slugify": "^1.4.6"
   },
   "devDependencies": {
     "nodemon": "^2.0.6"
