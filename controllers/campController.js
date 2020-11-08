@@ -2,75 +2,17 @@ const geocoder = require('../utils/geoCoder');
 const Camp = require('../models/campModel');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
+const path = require('path');
+const apiFeatures = require('../utils/apiFeatures');
 
 exports.filterBootCamps = catchAsync(async (req, res, next) => {
-  let query;
-  let queryString = JSON.stringify({ ...req.query });
-  queryString = queryString.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
-
+  // apiFeatures(Camp, 'courses');
   next();
 });
 
 exports.getAllBootCamps = catchAsync(async (req, res, next) => {
-  let query;
-  const reqQuery = { ...req.query };
-  //exclude fields
-  const excludeFields = ['page', 'sort', 'limit', 'fields'];
-
-  excludeFields.forEach((field) => delete reqQuery[field]);
-  // create operators lt gt gte in ggt  => $
-  let queryString = JSON.stringify(reqQuery);
-  queryString = queryString.replace(/\b(gte|gt|lte|lt|in)\b/g, (match) => `$${match}`);
-  // console.log(reqQuery);
-
-  query = Camp.find(JSON.parse(queryString));
-
-  // Select limited fields
-  if (req.query.fields) {
-    const fields = req.query.fields.split(',').join(' ');
-    query = query.select(fields);
-  } else {
-    query = query.select('-__v');
-  }
-  //sort
-  if (req.query.sort) {
-    const sortBy = req.query.sort.split(',').join(' ');
-    query = query.sort(sortBy);
-  } else {
-    query = query.sort('-createdAt');
-  }
-  // pagination
-  const page = req.query.page * 1 || 1;
-  const limit = req.query.limit * 1 || 25;
-  const startIndex = (page - 1) * limit;
-  const endIndex = page * limit;
-  const total = await Camp.countDocuments();
-  query = query.skip(startIndex).limit(limit);
-
-  //execute query
-  const bootCamps = await query.populate('courses');
-
-  const pagination = {};
-  if (endIndex < total) {
-    pagination.next = {
-      page: page + 1, // current page +1 => next page
-      limit,
-    };
-  }
-  if (startIndex > 0) {
-    pagination.prev = {
-      page: page - 1, // current page -1 => prev page
-      limit,
-    };
-  }
-  if (!bootCamps) next(new AppError(`No Bootcamps found`, 404));
-
-  res.status(200).json({
-    status: 'success',
-    length: bootCamps.length,
-    pagination,
-    data: bootCamps,
-  });
+  const results = await apiFeatures(Camp, 'courses', req.query)();
+  res.status(200).json(results);
 });
 
 exports.createBootCamp = catchAsync(async (req, res, next) => {
@@ -119,7 +61,8 @@ exports.deleteBootCamp = catchAsync(async (req, res, next) => {
     data: 'deleted',
   });
 });
-
+// Get BootCamps with in a radius
+// /api/v1/bootcamps/radius/:zipcode/:distance/:unit
 exports.getBootCampswithin = catchAsync(async (req, res, next) => {
   const { zipcode, distance, unit } = req.params;
   //Get lng/lat from geocoder
@@ -130,18 +73,63 @@ exports.getBootCampswithin = catchAsync(async (req, res, next) => {
 
   const radius = unit === 'mi' ? distance / 3963.2 : distance / 6378.1;
 
-  const bootcamps = await Camp.find({
+  const bootCamps = await Camp.find({
     location: { $geoWithin: { $centerSphere: [[lng, lat], radius] } },
   });
 
   res.status(200).json({
     status: 'success',
-    results: bootcamps.length,
+    results: bootCamps.length,
     data: {
-      data: bootcamps,
+      data: bootCamps,
     },
   });
 });
 
-// Get BootCamps with in a radius
-// /api/v1/bootcamps/radius/:zipcode/:distance/:unit
+// Upload photo
+
+exports.campPhotoUpload = catchAsync(async (req, res, next) => {
+  const bootCamp = await Camp.findById(req.params.id);
+  if (!bootCamp) {
+    return next(new AppError(`No Bootcamp found with id ${req.params.id}`, 404));
+  }
+
+  if (!req.files) {
+    return next(new AppError(`Please upload photo `, 400));
+  }
+  console.log(req.files.file);
+  const file = req.files.file;
+  // check if image is photo
+  if (!file.mimetype.startsWith('image')) {
+    return next(new AppError(`Please upload an image file `, 400));
+  }
+  // check file size
+  if (file.size > process.env.MAX_FILE_UPLOAD) {
+    return next(
+      new AppError(
+        `Please upload image with size less than ${process.env.MAX_FILE_UPLOAD} bytes `,
+        400
+      )
+    );
+  }
+  //create custom filename
+  file.name = `photo_${bootCamp._id}${path.parse(file.name).ext}`;
+  console.log(file.name);
+  //upload the file
+  // Use the mv() method to place the file somewhere on your server
+  file.mv(`${process.env.File_UPLOAD_PATH}/${file.name}`, async (err) => {
+    if (err) {
+      console.error(err);
+      return next(new AppError(`Problem with file upload `, 500));
+    }
+    await Camp.findByIdAndUpdate(req.params.id, {
+      photo: file.name,
+    });
+    res.status(200).json({
+      status: 'success',
+      data: {
+        data: 'File Uploaded Successfully',
+      },
+    });
+  });
+});

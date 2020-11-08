@@ -17,6 +17,9 @@ campRouter
   .patch(campController.patchBootCamp)
   .delete(campController.deleteBootCamp);
 
+// Photo Upload
+campRouter.route('/:id/photo').put(campController.campPhotoUpload);
+
 campRouter
   .route('/radius/:zipcode/:distance/:unit')
   .get(campController.getBootCampswithin);

@@ -3,22 +3,32 @@ const Camp = require('../models/campModel');
 
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
+const apiFeatures = require('../utils/apiFeatures');
 
 exports.getAllCourses = catchAsync(async (req, res, next) => {
-  let query;
-  if (req.params.bcampId) {
-    query = Course.find({ bootcamp: req.params.bcampId });
-  } else {
-    query = Course.find();
-  }
-  const courses = await query.populate({ path: 'bootcamp', select: 'name description' });
-  if (!courses) next(new AppError(`No Courses found`, 404));
+  // const results = await apiFeatures(
+  //   Course,
+  //   { path: 'bootcamp', select: 'name description' },
+  //   req.query
+  // )();
 
-  res.status(200).json({
-    status: 'success',
-    length: courses.length,
-    data: courses,
-  });
+  // return res.status(200).json(results);
+  if (req.params.bcampId) {
+    const courses = await Course.find({ bootcamp: req.params.bcampId });
+    return res.status(200).json({
+      status: 'success',
+      length: courses.length,
+      data: courses,
+    });
+  } else {
+    const results = await apiFeatures(
+      Course,
+      { path: 'bootcamp', select: 'name description' },
+      req.query
+    )();
+
+    return res.status(200).json(results);
+  }
 });
 
 // /api/v1/bootcamps/5d713995b721c3bb38c1f5d0/courses  (from campRouter)= gives the course
