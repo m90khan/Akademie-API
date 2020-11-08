@@ -5,17 +5,26 @@ const catchAsync = require('../utils/catchAsync');
 const path = require('path');
 const apiFeatures = require('../utils/apiFeatures');
 
-exports.filterBootCamps = catchAsync(async (req, res, next) => {
-  // apiFeatures(Camp, 'courses');
-  next();
-});
-
 exports.getAllBootCamps = catchAsync(async (req, res, next) => {
   const results = await apiFeatures(Camp, 'courses', req.query)();
   res.status(200).json(results);
 });
 
 exports.createBootCamp = catchAsync(async (req, res, next) => {
+  //add user to body
+  req.body.user = req.user.id;
+  //check for published bootcamps
+  const publishedBootCamp = await Camp.findOne({ user: req.user.id });
+  // only allow one bootcamp for publisher
+
+  if (publishedBootCamp && req.user.role !== 'admin') {
+    return next(
+      new AppError(
+        `The user with id ${req.user.id} has already published a bootcamp`,
+        404
+      )
+    );
+  }
   const bootCamp = await Camp.create(req.body);
 
   res.status(201).json({
@@ -36,16 +45,26 @@ exports.getBootCamp = catchAsync(async (req, res, next) => {
   });
 });
 exports.patchBootCamp = catchAsync(async (req, res, next) => {
-  const bootCamp = await Camp.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true,
-  });
+  let bootCamp = await Camp.findById(req.params.id);
   if (!bootCamp) {
     return next(new AppError(`No Bootcamp found with id ${req.params.id}`, 404));
   }
+  // check if current user is the bootcamp owner
+  if (bootCamp.user.toString() !== req.user.id && req.user.role !== 'admin') {
+    return next(
+      new AppError(`User with id ${req.params.id} is not authorized to update`, 401)
+    );
+  }
+  bootCamp = await Camp.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true,
+  });
+
   res.status(200).json({
     status: 'success',
-    data: bootCamp,
+    data: {
+      bootcamp: bootCamp,
+    },
   });
 });
 
@@ -54,7 +73,12 @@ exports.deleteBootCamp = catchAsync(async (req, res, next) => {
   if (!bootCamp) {
     return next(new AppError(`No Bootcamp found with id ${req.params.id}`, 404));
   }
-
+  // check if current user is the bootcamp owner
+  if (bootCamp.user.toString() !== req.user.id && req.user.role !== 'admin') {
+    return next(
+      new AppError(`User with id ${req.params.id} is not authorized to delete`, 401)
+    );
+  }
   await bootCamp.remove(); // to trigger the remove middleware
   res.status(204).json({
     status: 'success',

@@ -2,6 +2,7 @@ const express = require('express');
 const morgan = require('morgan');
 const colors = require('colors');
 const path = require('path');
+const cookieParser = require('cookie-parser');
 
 const fileupload = require('express-fileupload');
 const app = express();
@@ -10,6 +11,8 @@ const errorController = require('./utils/errorController');
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(express.json({ limit: '10kb' })); // limit body data
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(cookieParser());
+
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
