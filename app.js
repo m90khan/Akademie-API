@@ -3,7 +3,12 @@ const morgan = require('morgan');
 const colors = require('colors');
 const path = require('path');
 const cookieParser = require('cookie-parser');
-
+const rateLimit = require('express-rate-limit');
+const cors = require('cors');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
+const hpp = require('hpp');
 const fileupload = require('express-fileupload');
 const app = express();
 const AppError = require('./utils/appError');
@@ -25,7 +30,25 @@ app.use((req, res, next) => {
 });
 //file upload
 app.use(fileupload());
+//LIMIT REQUESTS: To prevent too many requests , DOS , Brute force attacks
+const limiter = rateLimit({
+  max: 100, // requests
+  windowMs: 10 * 60 * 1000, //time
+  message: 'Too many requests from this IP, Please try again in an hour', //error message
+});
+app.use('/api', limiter); // only limiting it to api routes
 
+// SET Security HTTP HEADERS
+app.use(helmet());
+// Data Sanitization against noSQL query Injections  email: {"$gt": ""}
+app.use(mongoSanitize());
+// Data Sanitization against Cross Site Scripting attacks - clean html code from js
+app.use(xss());
+//preventing parameter pollution
+app.use(hpp());
+// Enable cors
+app.use(cors);
+// ROutes
 app.use('/api/v1/bootcamps', require('./routes/campRouter'));
 app.use('/api/v1/courses', require('./routes/courseRouter'));
 app.use('/api/v1/reviews', require('./routes/reviewRouter'));

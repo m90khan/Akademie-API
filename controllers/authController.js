@@ -11,10 +11,10 @@ exports.protect = catchAsync(async (req, res, next) => {
   let token;
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1];
+  } else if (req.cookies.token) {
+    token = req.cookies.token;
   }
-  //   else if (req.cookies.token) {
-  //     token = req.cookies.token;
-  //   }
+
   // if token exists
   if (!token) {
     return next(new AppError('You are not logged in! Please login to get access.', 401));
@@ -216,6 +216,18 @@ exports.getMe = catchAsync(async (req, res, next) => {
   });
 });
 
+/*
+@dest    : Log out current User / clear cookie
+@route   : GET /api/v1/auth/logout
+@access  : private
+*/
+exports.logout = catchAsync(async (req, res, next) => {
+  res.cookie('jwt', 'loggedout', {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+  });
+  res.status(200).json({ status: 'success' });
+});
 /*
   @dest    : Update User Details
   @route   : PATCH /api/v1/auth/updateme

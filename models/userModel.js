@@ -27,14 +27,14 @@ const userSchema = new mongoose.Schema({
   },
   passwordConfirm: {
     type: String,
-    required: [true, 'Please confirm your password'],
-    validate: {
-      // - validator only works on save and create
-      validator: function (pass) {
-        return pass === this.password;
-      },
-      message: 'Password Confirm field is not same as password',
-    },
+    // required: [true, 'Please confirm your password'],
+    // validate: {
+    //   // - validator only works on save and create
+    //   validator: function (pass) {
+    //     return pass === this.password;
+    //   },
+    //   message: 'Password Confirm field is not same as password',
+    // },
   },
   resetPasswordToken: String,
   resetPasswordExpires: Date,

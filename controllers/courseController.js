@@ -5,6 +5,13 @@ const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const apiFeatures = require('../utils/apiFeatures');
 
+/*
+@dest    : Get All Courses
+@route   : GET /api/v1/courses/
+@route   : GET /api/v1/bootcamps/:bcampId/courses
+@access  : Public
+*/
+
 exports.getAllCourses = catchAsync(async (req, res, next) => {
   // const results = await apiFeatures(
   //   Course,

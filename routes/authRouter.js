@@ -3,6 +3,8 @@ const authController = require('../controllers/authController');
 
 authRouter.route('/register').post(authController.registerUser);
 authRouter.route('/login').post(authController.loginUser);
+authRouter.route('/logout').get(authController.protect, authController.logout);
+
 authRouter.route('/forgotpassword').post(authController.forgotPassword);
 authRouter.route('/resetpassword/:token').put(authController.resetPassword);
 

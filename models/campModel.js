@@ -70,6 +70,10 @@ const campSchema = new mongoose.Schema(
       min: [1, 'Rating must be at least 1'],
       max: [10, 'Rating cannot be greater than 10'],
     },
+    ratingsQuantity: {
+      type: Number,
+      default: 0,
+    },
     averageCost: {
       type: Number,
     },
