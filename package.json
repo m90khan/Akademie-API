@@ -4,8 +4,8 @@
   "description": "Akademie backend api ",
   "main": "server.js",
   "scripts": {
-    "dev-server": "nodemon server.js",
-    "prod-server": "NODE_ENV=production node server"
+    "dev-start": "nodemon server.js",
+    "prod-start": "NODE_ENV=production node server"
   },
   "repository": {
     "type": "git",

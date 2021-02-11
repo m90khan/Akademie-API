@@ -4,20 +4,20 @@ const colors = require('colors');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
-const cors = require('cors');
 const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
 const fileupload = require('express-fileupload');
-const app = express();
+const cors = require('cors');
 const AppError = require('./utils/appError');
 const errorController = require('./utils/errorController');
-app.use(express.urlencoded({ extended: true, limit: '10kb' }));
-app.use(express.json({ limit: '10kb' })); // limit body data
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(cookieParser());
 
+const app = express();
+app.use(express.static(path.join(__dirname, 'public')));
+
+// SET Security HTTP HEADERS
+app.use(helmet());
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
@@ -36,18 +36,21 @@ const limiter = rateLimit({
   windowMs: 10 * 60 * 1000, //time
   message: 'Too many requests from this IP, Please try again in an hour', //error message
 });
-app.use('/api', limiter); // only limiting it to api routes
 
-// SET Security HTTP HEADERS
-app.use(helmet());
-// Data Sanitization against noSQL query Injections  email: {"$gt": ""}
+app.use(cookieParser());
+
+app.use('/api', limiter); // only limiting it to api routes
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json()); // limit body data
+// // Data Sanitization against noSQL query Injections  email: {"$gt": ""}
 app.use(mongoSanitize());
-// Data Sanitization against Cross Site Scripting attacks - clean html code from js
+// // Data Sanitization against Cross Site Scripting attacks - clean html code from js
 app.use(xss());
-//preventing parameter pollution
+// //preventing parameter pollution
 app.use(hpp());
 // Enable cors
-app.use(cors);
+app.use(cors());
+
 // ROutes
 app.use('/api/v1/bootcamps', require('./routes/campRouter'));
 app.use('/api/v1/courses', require('./routes/courseRouter'));

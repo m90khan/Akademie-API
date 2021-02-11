@@ -5,8 +5,8 @@ const authController = require('../controllers/authController');
 const courseRouter = require('./courseRouter');
 const reviewRouter = require('./reviewRouter');
 // {{URL}}/api/v1/bootcamps/5d713995b721c3bb38c1f5d0/courses
-campRouter.use('/:bcampId/courses', courseRouter);
-campRouter.use('/:bcampId/reviews', reviewRouter);
+// campRouter.use('/:bcampId/courses', courseRouter);
+// campRouter.use('/:bcampId/reviews', reviewRouter);
 
 campRouter
   .route('/')
